@@ -2,6 +2,8 @@ package com.pushtorefresh.storio.contentresolver.integration;
 
 import android.content.ContentResolver;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -60,6 +62,9 @@ public abstract class IntegrationTest {
 
         storIOContentResolver = DefaultStorIOContentResolver.builder()
                 .contentResolver(contentResolver)
+                        // Looks like Robolectric has some problems with handlers attached to non-main threads
+                        // And we have some tests flakiness, so let's use Main Looper
+                .contentObserverHandler(new Handler(Looper.getMainLooper()))
                 .addTypeMapping(Tweet.class, ContentResolverTypeMapping.<Tweet>builder()
                         .putResolver(TweetMeta.PUT_RESOLVER)
                         .getResolver(TweetMeta.GET_RESOLVER)
