@@ -36,7 +36,7 @@ public class InsertTest extends IntegrationTest {
         TestItem testItem = TestItem.create(null, "value");
         ContentValues cv = testItem.toContentValues();
 
-        PutResult putResult = storIOContentResolver
+        PutResult insertResult = storIOContentResolver
                 .put()
                 .contentValues(cv)
                 .withPutResolver(new PutResolver<ContentValues>() {
@@ -55,7 +55,41 @@ public class InsertTest extends IntegrationTest {
                 .prepare()
                 .executeAsBlocking();
 
-        assertThat(putResult.wasInserted()).isTrue();
+        assertThat(insertResult.wasInserted()).isTrue();
+
+        Cursor cursor = contentResolver.query(TestItem.CONTENT_URI, null, null, null, null);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+
+        cursor.moveToFirst();
+
+        assertThat(testItem.equalsWithoutId(TestItem.fromCursor(cursor))).isTrue();
+
+        cursor.close();
+
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+    }
+
+    @Test
+    public void putWithTypeMapping() {
+        TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
+
+        storIOContentResolver
+                .observeChangesOfUri(TestItem.CONTENT_URI)
+                .take(1)
+                .subscribe(testSubscriber);
+
+        TestItem testItem = TestItem.create(null, "value");
+
+        PutResult insertResult = storIOContentResolver
+                .put()
+                .object(testItem)
+                .prepare()
+                .executeAsBlocking();
+
+        assertThat(insertResult.wasInserted()).isTrue();
 
         Cursor cursor = contentResolver.query(TestItem.CONTENT_URI, null, null, null, null);
 
