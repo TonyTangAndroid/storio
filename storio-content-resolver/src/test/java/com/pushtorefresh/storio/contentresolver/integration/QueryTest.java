@@ -94,7 +94,7 @@ public class QueryTest extends IntegrationTest {
                 .take(1)
                 .subscribe(changesTestSubscriber);
 
-        TestItem testItemToInsert = TestItem.create(null, "value1");
+        TestItem testItemToInsert = TestItem.create(null, "value");
 
         contentResolver.insert(TestItem.CONTENT_URI, testItemToInsert.toContentValues());
 
@@ -121,6 +121,44 @@ public class QueryTest extends IntegrationTest {
         Assertions.assertThat(listOfCursors.get(0)).hasCount(1);
         listOfCursors.get(0).moveToFirst();
         assertThat(testItemToInsert.equalsWithoutId(TestItem.fromCursor(listOfCursors.get(0))))
+                .isTrue();
+
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValues(Changes.newInstance(TestItem.CONTENT_URI));
+    }
+
+    @Test
+    public void getListOfObjectsAsObservableOnlyInitialValue() {
+        final TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
+
+        storIOContentResolver
+                .observeChangesOfUri(TestItem.CONTENT_URI)
+                .take(1)
+                .subscribe(changesTestSubscriber);
+
+        TestItem testItemToInsert = TestItem.create(null, "value");
+
+        contentResolver.insert(TestItem.CONTENT_URI, testItemToInsert.toContentValues());
+
+        final TestSubscriber<List<TestItem>> listTestSubscriber = new TestSubscriber<List<TestItem>>();
+
+        storIOContentResolver
+                .get()
+                .listOfObjects(TestItem.class)
+                .withQuery(Query.builder()
+                        .uri(TestItem.CONTENT_URI)
+                        .build())
+                .prepare()
+                .createObservable()
+                .take(1)
+                .subscribe(listTestSubscriber);
+
+        listTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        listTestSubscriber.assertNoErrors();
+
+        assertThat(listTestSubscriber.getOnNextEvents()).hasSize(1);
+        assertThat(testItemToInsert.equalsWithoutId(listTestSubscriber.getOnNextEvents().get(0).get(0)))
                 .isTrue();
 
         changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
