@@ -19,6 +19,7 @@ import org.robolectric.annotation.Config;
 
 import rx.observers.TestSubscriber;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(RobolectricGradleTestRunner.class)
@@ -27,12 +28,12 @@ public class InsertTest extends IntegrationTest {
 
     @Test
     public void insertContentValuesExecuteAsBlocking() {
-        TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
+        TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
                 .observeChangesOfUri(TestItem.CONTENT_URI)
                 .take(1)
-                .subscribe(testSubscriber);
+                .subscribe(changesTestSubscriber);
 
         TestItem testItem = TestItem.create(null, "value");
         ContentValues cv = testItem.toContentValues();
@@ -68,19 +69,19 @@ public class InsertTest extends IntegrationTest {
 
         cursor.close();
 
-        testSubscriber.awaitTerminalEvent();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
     }
 
     @Test
     public void putWithTypeMappingExecuteAsBlocking() {
-        TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
+        TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
                 .observeChangesOfUri(TestItem.CONTENT_URI)
                 .take(1)
-                .subscribe(testSubscriber);
+                .subscribe(changesTestSubscriber);
 
         TestItem testItem = TestItem.create(null, "value");
 
@@ -102,8 +103,8 @@ public class InsertTest extends IntegrationTest {
 
         cursor.close();
 
-        testSubscriber.awaitTerminalEvent();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
     }
 }

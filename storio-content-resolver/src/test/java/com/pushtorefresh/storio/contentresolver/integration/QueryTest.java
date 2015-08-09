@@ -16,6 +16,7 @@ import java.util.List;
 
 import rx.observers.TestSubscriber;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(RobolectricGradleTestRunner.class)
@@ -24,12 +25,12 @@ public class QueryTest extends IntegrationTest {
 
     @Test
     public void getCursorExecuteAsBlocking() {
-        TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
+        TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
                 .observeChangesOfUri(TestItem.CONTENT_URI)
                 .take(1)
-                .subscribe(testSubscriber);
+                .subscribe(changesTestSubscriber);
 
         TestItem testItemToInsert = TestItem.create(null, "value");
         contentResolver.insert(TestItem.CONTENT_URI, testItemToInsert.toContentValues());
@@ -49,19 +50,19 @@ public class QueryTest extends IntegrationTest {
 
         assertThat(testItemToInsert.equalsWithoutId(TestItem.fromCursor(cursor))).isTrue();
 
-        testSubscriber.awaitTerminalEvent();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
     }
 
     @Test
     public void getListOfObjectsExecuteAsBlocking() {
-        TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
+        TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
                 .observeChangesOfUri(TestItem.CONTENT_URI)
                 .take(1)
-                .subscribe(testSubscriber);
+                .subscribe(changesTestSubscriber);
 
         TestItem testItemToInsert = TestItem.create(null, "value");
         contentResolver.insert(TestItem.CONTENT_URI, testItemToInsert.toContentValues());
@@ -79,8 +80,51 @@ public class QueryTest extends IntegrationTest {
 
         assertThat(testItemToInsert.equalsWithoutId(list.get(0))).isTrue();
 
-        testSubscriber.awaitTerminalEvent();
-        testSubscriber.assertNoErrors();
-        testSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValue(Changes.newInstance(TestItem.CONTENT_URI));
+    }
+
+    @Test
+    public void getCursorAsObservableOnlyInitialValue() {
+        final TestSubscriber<Changes> changesTestSubscriber = new TestSubscriber<Changes>();
+
+        storIOContentResolver
+                .observeChangesOfUri(TestItem.CONTENT_URI)
+                .take(1)
+                .subscribe(changesTestSubscriber);
+
+        TestItem testItemToInsert = TestItem.create(null, "value1");
+
+        contentResolver.insert(TestItem.CONTENT_URI, testItemToInsert.toContentValues());
+
+        final TestSubscriber<Cursor> cursorTestSubscriber = new TestSubscriber<Cursor>();
+
+        storIOContentResolver
+                .get()
+                .cursor()
+                .withQuery(Query.builder()
+                        .uri(TestItem.CONTENT_URI)
+                        .build())
+                .prepare()
+                .createObservable()
+                .take(1)
+                .subscribe(cursorTestSubscriber);
+
+        cursorTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        cursorTestSubscriber.assertNoErrors();
+
+        List<Cursor> listOfCursors = cursorTestSubscriber.getOnNextEvents();
+
+        assertThat(listOfCursors).hasSize(1);
+
+        Assertions.assertThat(listOfCursors.get(0)).hasCount(1);
+        listOfCursors.get(0).moveToFirst();
+        assertThat(testItemToInsert.equalsWithoutId(TestItem.fromCursor(listOfCursors.get(0))))
+                .isTrue();
+
+        changesTestSubscriber.awaitTerminalEvent(60, SECONDS);
+        changesTestSubscriber.assertNoErrors();
+        changesTestSubscriber.assertValues(Changes.newInstance(TestItem.CONTENT_URI));
     }
 }
