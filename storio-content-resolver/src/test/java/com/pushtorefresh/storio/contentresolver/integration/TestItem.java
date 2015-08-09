@@ -62,6 +62,10 @@ class TestItem {
         return value.equals(testItem.value);
     }
 
+    public boolean equalsWithoutId(@NonNull TestItem object) {
+        return value.equals(object.value);
+    }
+
     @Override
     public int hashCode() {
         int result = id != null ? id.hashCode() : 0;

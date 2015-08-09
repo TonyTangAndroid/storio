@@ -1,5 +1,6 @@
 package com.pushtorefresh.storio.contentresolver.integration;
 
+import android.content.ContentResolver;
 import android.support.annotation.NonNull;
 
 import com.pushtorefresh.storio.contentresolver.BuildConfig;
@@ -17,13 +18,18 @@ import org.robolectric.shadows.ShadowContentResolver;
 @Config(constants = BuildConfig.class, sdk = 21)
 public abstract class IntegrationTest {
 
-    @NonNull
+    @NonNull // Initialized in @Before
+    protected ContentResolver contentResolver;
+
+    @NonNull // Initialized in @Before
     protected StorIOContentResolver storIOContentResolver;
 
     @Before
     public void setUp() {
+        contentResolver = RuntimeEnvironment.application.getContentResolver();
+
         storIOContentResolver = DefaultStorIOContentResolver.builder()
-                .contentResolver(RuntimeEnvironment.application.getContentResolver())
+                .contentResolver(contentResolver)
                 .build();
 
         IntegrationContentProvider contentProvider = new IntegrationContentProvider();

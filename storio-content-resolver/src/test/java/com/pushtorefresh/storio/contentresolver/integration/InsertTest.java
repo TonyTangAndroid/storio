@@ -1,6 +1,7 @@
 package com.pushtorefresh.storio.contentresolver.integration;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 
 import com.pushtorefresh.storio.contentresolver.BuildConfig;
@@ -32,7 +33,8 @@ public class InsertTest extends IntegrationTest {
                 .take(1)
                 .subscribe(testSubscriber);
 
-        ContentValues cv = TestItem.create(null, "value").toContentValues();
+        TestItem testItem = TestItem.create(null, "value");
+        ContentValues cv = testItem.toContentValues();
 
         PutResult putResult = storIOContentResolver
                 .put()
@@ -54,6 +56,16 @@ public class InsertTest extends IntegrationTest {
                 .executeAsBlocking();
 
         assertThat(putResult.wasInserted()).isTrue();
+
+        Cursor cursor = contentResolver.query(TestItem.CONTENT_URI, null, null, null, null);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+
+        cursor.moveToFirst();
+
+        assertThat(testItem.equalsWithoutId(TestItem.fromCursor(cursor))).isTrue();
+
+        cursor.close();
 
         testSubscriber.awaitTerminalEvent();
         testSubscriber.assertNoErrors();
