@@ -3,20 +3,14 @@ package com.pushtorefresh.storio.contentresolver.integration;
 import android.content.ContentResolver;
 import android.support.annotation.NonNull;
 
-import com.pushtorefresh.storio.contentresolver.BuildConfig;
 import com.pushtorefresh.storio.contentresolver.ContentResolverTypeMapping;
 import com.pushtorefresh.storio.contentresolver.StorIOContentResolver;
 import com.pushtorefresh.storio.contentresolver.impl.DefaultStorIOContentResolver;
 
 import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.RuntimeEnvironment;
-import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowContentResolver;
 
-@RunWith(RobolectricGradleTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 21)
 public abstract class IntegrationTest {
 
     @NonNull // Initialized in @Before

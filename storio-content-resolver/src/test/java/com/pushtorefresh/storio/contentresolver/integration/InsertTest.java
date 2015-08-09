@@ -11,6 +11,7 @@ import com.pushtorefresh.storio.contentresolver.operations.put.PutResolver;
 import com.pushtorefresh.storio.contentresolver.operations.put.PutResult;
 import com.pushtorefresh.storio.contentresolver.queries.InsertQuery;
 
+import org.assertj.android.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricGradleTestRunner;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class InsertTest extends IntegrationTest {
 
     @Test
-    public void insertContentValues() {
+    public void insertContentValuesExecuteAsBlocking() {
         TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
@@ -59,7 +60,7 @@ public class InsertTest extends IntegrationTest {
 
         Cursor cursor = contentResolver.query(TestItem.CONTENT_URI, null, null, null, null);
 
-        assertThat(cursor.getCount()).isEqualTo(1);
+        Assertions.assertThat(cursor).hasCount(1);
 
         cursor.moveToFirst();
 
@@ -73,7 +74,7 @@ public class InsertTest extends IntegrationTest {
     }
 
     @Test
-    public void putWithTypeMapping() {
+    public void putWithTypeMappingExecuteAsBlocking() {
         TestSubscriber<Changes> testSubscriber = new TestSubscriber<Changes>();
 
         storIOContentResolver
@@ -93,7 +94,7 @@ public class InsertTest extends IntegrationTest {
 
         Cursor cursor = contentResolver.query(TestItem.CONTENT_URI, null, null, null, null);
 
-        assertThat(cursor.getCount()).isEqualTo(1);
+        Assertions.assertThat(cursor).hasCount(1);
 
         cursor.moveToFirst();
 
